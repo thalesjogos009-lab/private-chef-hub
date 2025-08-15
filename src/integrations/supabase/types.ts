@@ -14,16 +14,289 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bookings: {
+        Row: {
+          address: string
+          chef_id: string
+          created_at: string
+          customer_id: string
+          date: string
+          guests: number
+          id: string
+          observations: string | null
+          status: Database["public"]["Enums"]["booking_status"]
+          time: string
+          total_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          chef_id: string
+          created_at?: string
+          customer_id: string
+          date: string
+          guests: number
+          id?: string
+          observations?: string | null
+          status?: Database["public"]["Enums"]["booking_status"]
+          time: string
+          total_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          chef_id?: string
+          created_at?: string
+          customer_id?: string
+          date?: string
+          guests?: number
+          id?: string
+          observations?: string | null
+          status?: Database["public"]["Enums"]["booking_status"]
+          time?: string
+          total_price?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_chef_id_fkey"
+            columns: ["chef_id"]
+            isOneToOne: false
+            referencedRelation: "chefs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chefs: {
+        Row: {
+          address: string | null
+          bio: string | null
+          city: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          lat: number | null
+          lng: number | null
+          price_level: number
+          rating: number | null
+          service_radius_km: number | null
+          specialty: string
+          state: string | null
+          total_reviews: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          bio?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          lat?: number | null
+          lng?: number | null
+          price_level?: number
+          rating?: number | null
+          service_radius_km?: number | null
+          specialty: string
+          state?: string | null
+          total_reviews?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          bio?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          lat?: number | null
+          lng?: number | null
+          price_level?: number
+          rating?: number | null
+          service_radius_km?: number | null
+          specialty?: string
+          state?: string | null
+          total_reviews?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      dishes: {
+        Row: {
+          chef_id: string
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          is_featured: boolean | null
+          name: string
+          prep_time_minutes: number | null
+          price_per_person: number | null
+          updated_at: string
+        }
+        Insert: {
+          chef_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          name: string
+          prep_time_minutes?: number | null
+          price_per_person?: number | null
+          updated_at?: string
+        }
+        Update: {
+          chef_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          name?: string
+          prep_time_minutes?: number | null
+          price_per_person?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dishes_chef_id_fkey"
+            columns: ["chef_id"]
+            isOneToOne: false
+            referencedRelation: "chefs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      favorites: {
+        Row: {
+          chef_id: string
+          created_at: string
+          customer_id: string
+          id: string
+        }
+        Insert: {
+          chef_id: string
+          created_at?: string
+          customer_id: string
+          id?: string
+        }
+        Update: {
+          chef_id?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_chef_id_fkey"
+            columns: ["chef_id"]
+            isOneToOne: false
+            referencedRelation: "chefs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          booking_id: string
+          chef_id: string
+          comment: string | null
+          created_at: string
+          customer_id: string
+          id: string
+          rating: number
+        }
+        Insert: {
+          booking_id: string
+          chef_id: string
+          comment?: string | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          rating: number
+        }
+        Update: {
+          booking_id?: string
+          chef_id?: string
+          comment?: string | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          rating?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_chef_id_fkey"
+            columns: ["chef_id"]
+            isOneToOne: false
+            referencedRelation: "chefs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { user_uuid: string }
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
     }
     Enums: {
-      [_ in never]: never
+      booking_status: "pending" | "confirmed" | "completed" | "cancelled"
+      user_role: "admin" | "customer" | "chef"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +423,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      booking_status: ["pending", "confirmed", "completed", "cancelled"],
+      user_role: ["admin", "customer", "chef"],
+    },
   },
 } as const
