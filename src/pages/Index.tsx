@@ -6,6 +6,11 @@ import { BookingFlow } from "@/components/ui/booking-flow";
 import { AuthFlow } from "@/components/ui/auth-flow";
 import { SplashScreen } from "@/components/ui/splash-screen";
 import { ChefMap } from "@/components/ui/chef-map";
+import { UserMenu } from "@/components/ui/user-menu";
+import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import { ChefDashboard } from "@/components/chef/ChefDashboard";
+import { CustomerDashboard } from "@/components/customer/CustomerDashboard";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Star } from "lucide-react";
 
@@ -17,14 +22,23 @@ type AppState =
   | 'booking' 
   | 'auth'
   | 'booking-success'
-  | 'map';
+  | 'map'
+  | 'admin-dashboard'
+  | 'chef-dashboard'
+  | 'customer-dashboard'
+  | 'discover';
 
 type AuthMode = 'login' | 'signup' | 'chef-signup';
 
 const Index = () => {
+  const { user, userRole, loading } = useAuth();
   const [appState, setAppState] = useState<AppState>('splash');
   const [selectedChefId, setSelectedChefId] = useState<string>('');
   const [authMode, setAuthMode] = useState<AuthMode>('login');
+
+  const handleNavigate = (route: string) => {
+    setAppState(route as AppState);
+  };
 
   const handleSplashComplete = () => {
     setAppState('hero');
@@ -158,8 +172,39 @@ const Index = () => {
     );
   }
 
+  if (appState === 'admin-dashboard') {
+    return <AdminDashboard />;
+  }
+
+  if (appState === 'chef-dashboard') {
+    return <ChefDashboard onNavigate={handleNavigate} />;
+  }
+
+  if (appState === 'customer-dashboard') {
+    return <CustomerDashboard onNavigate={handleNavigate} />;
+  }
+
+  if (appState === 'discover') {
+    return (
+      <ChefDiscovery 
+        onChefSelect={handleChefSelect} 
+        onMapView={handleMapView}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen">
+      {/* Header with User Menu */}
+      {user && (
+        <header className="bg-background border-b px-4 py-3">
+          <div className="container mx-auto flex justify-between items-center">
+            <h1 className="text-xl font-bold">Chef em Casa</h1>
+            <UserMenu onNavigate={handleNavigate} />
+          </div>
+        </header>
+      )}
+
       <HeroSection 
         onFindChef={handleStartDiscovery}
         onBecomeChef={() => handleAuthStart('chef-signup')}
