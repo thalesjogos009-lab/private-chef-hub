@@ -10,6 +10,7 @@ import { UserMenu } from "@/components/ui/user-menu";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { ChefDashboard } from "@/components/chef/ChefDashboard";
 import { CustomerDashboard } from "@/components/customer/CustomerDashboard";
+import ProfileSettings from "@/pages/ProfileSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Star } from "lucide-react";
@@ -26,7 +27,8 @@ type AppState =
   | 'admin-dashboard'
   | 'chef-dashboard'
   | 'customer-dashboard'
-  | 'discover';
+  | 'discover'
+  | 'profile-settings';
 
 type AuthMode = 'login' | 'signup' | 'chef-signup';
 
@@ -191,6 +193,10 @@ const Index = () => {
         onMapView={handleMapView}
       />
     );
+  }
+
+  if (appState === 'profile-settings') {
+    return <ProfileSettings onBack={() => setAppState('discovery')} />;
   }
 
   return (

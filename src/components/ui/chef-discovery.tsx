@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ChefCard } from "./chef-card";
 import { Button } from "./button";
 import { Input } from "./input";
+import { ProfileMenu } from "./profile-menu";
 import { Filter, Map, Search } from "lucide-react";
 import chefPortrait1 from "@/assets/chef-portrait-1.jpg";
 import chefPortrait2 from "@/assets/chef-portrait-2.jpg";
@@ -120,7 +121,7 @@ export function ChefDiscovery({ onChefSelect, onMapView }: ChefDiscoveryProps) {
       {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-center gap-4">
+          <div className="flex justify-center gap-4 items-center">
             <Button 
               variant="outline" 
               className="flex-1 max-w-32"
@@ -129,6 +130,7 @@ export function ChefDiscovery({ onChefSelect, onMapView }: ChefDiscoveryProps) {
               <Map className="w-4 h-4 mr-2" />
               Mapa
             </Button>
+            <ProfileMenu onNavigate={(route) => console.log('Navigate to:', route)} />
             <Button className="flex-1 max-w-48 bg-gradient-primary hover:opacity-90">
               Ver Todos os Chefs
             </Button>
