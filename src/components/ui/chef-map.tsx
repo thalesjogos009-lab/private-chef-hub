@@ -1,11 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
-import { ArrowLeft, MapPin, Users, Key, Eye, EyeOff } from "lucide-react";
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import { ArrowLeft, MapPin, Users } from "lucide-react";
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import chefPortrait1 from "@/assets/chef-portrait-1.jpg";
 import chefPortrait2 from "@/assets/chef-portrait-2.jpg";
 
@@ -70,13 +67,12 @@ const mockChefs: ChefLocation[] = [
 
 export function ChefMap({ onBack, onChefSelect }: ChefMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const [mapboxToken, setMapboxToken] = useState("");
-  const [showTokenInput, setShowTokenInput] = useState(true);
-  const [showToken, setShowToken] = useState(false);
+  const map = useRef<L.Map | null>(null);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [nearbyChefs, setNearbyChefs] = useState<ChefLocation[]>([]);
   const [isMapReady, setIsMapReady] = useState(false);
+  const markersRef = useRef<L.Marker[]>([]);
+  const circlesRef = useRef<L.Circle[]>([]);
 
   // Get user location
   useEffect(() => {
@@ -133,239 +129,212 @@ export function ChefMap({ onBack, onChefSelect }: ChefMapProps) {
     return R * c;
   };
 
+  const createChefIcon = (chef: ChefLocation) => {
+    const iconHtml = `
+      <div style="
+        position: relative;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        background-image: url('${chef.photo}');
+        background-size: cover;
+        background-position: center;
+        cursor: pointer;
+        transition: transform 0.2s;
+      ">
+        <div style="
+          position: absolute;
+          bottom: -8px;
+          right: -8px;
+          background: #f59e0b;
+          color: white;
+          border-radius: 50%;
+          width: 20px;
+          height: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 10px;
+          font-weight: bold;
+          border: 2px solid white;
+        ">
+          ${chef.rating}
+        </div>
+      </div>
+    `;
+
+    return L.divIcon({
+      html: iconHtml,
+      className: 'chef-marker',
+      iconSize: [50, 50],
+      iconAnchor: [25, 25],
+      popupAnchor: [0, -25]
+    });
+  };
+
   const initializeMap = () => {
-    if (!mapContainer.current || !userLocation || !mapboxToken) return;
+    if (!mapContainer.current || !userLocation) return;
 
-    mapboxgl.accessToken = mapboxToken;
+    // Initialize map
+    map.current = L.map(mapContainer.current).setView([userLocation.lat, userLocation.lng], 13);
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/light-v11',
-      center: [userLocation.lng, userLocation.lat],
-      zoom: 12,
-      pitch: 30,
+    // Add tile layer (OpenStreetMap)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map.current);
+
+    // Add user location marker
+    const userIcon = L.divIcon({
+      html: `
+        <div style="
+          width: 20px;
+          height: 20px;
+          background: #3b82f6;
+          border: 3px solid white;
+          border-radius: 50%;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+          position: relative;
+        ">
+          <div style="
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+          "></div>
+        </div>
+      `,
+      className: 'user-marker',
+      iconSize: [20, 20],
+      iconAnchor: [10, 10]
     });
 
-    map.current.addControl(
-      new mapboxgl.NavigationControl({
-        visualizePitch: true,
-      }),
-      'top-right'
-    );
+    L.marker([userLocation.lat, userLocation.lng], { icon: userIcon })
+      .addTo(map.current)
+      .bindPopup('Sua localização')
+      .openPopup();
 
-    map.current.on('load', () => {
-      setIsMapReady(true);
-      addChefMarkers();
-      addServiceRadiuses();
-    });
+    // Add chef markers and service areas
+    addChefMarkers();
+    setIsMapReady(true);
   };
 
   const addChefMarkers = () => {
     if (!map.current) return;
 
-    mockChefs.forEach(chef => {
-      // Create chef marker element
-      const markerEl = document.createElement('div');
-      markerEl.className = 'chef-marker';
-      markerEl.style.backgroundImage = `url(${chef.photo})`;
-      markerEl.style.width = '50px';
-      markerEl.style.height = '50px';
-      markerEl.style.borderRadius = '50%';
-      markerEl.style.backgroundSize = 'cover';
-      markerEl.style.backgroundPosition = 'center';
-      markerEl.style.border = '3px solid white';
-      markerEl.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
-      markerEl.style.cursor = 'pointer';
-      markerEl.style.transition = 'transform 0.2s';
-
-      markerEl.addEventListener('mouseenter', () => {
-        markerEl.style.transform = 'scale(1.1)';
-      });
-
-      markerEl.addEventListener('mouseleave', () => {
-        markerEl.style.transform = 'scale(1)';
-      });
-
-      markerEl.addEventListener('click', () => {
-        onChefSelect(chef.id);
-      });
-
-      // Add marker to map
-      new mapboxgl.Marker(markerEl)
-        .setLngLat([chef.lng, chef.lat])
-        .addTo(map.current!);
-
-      // Add popup with chef info
-      const popup = new mapboxgl.Popup({
-        offset: 25,
-        closeButton: false,
-        closeOnClick: false
-      }).setHTML(`
-        <div style="padding: 8px; text-align: center;">
-          <h4 style="margin: 0 0 4px 0; font-weight: bold;">${chef.name}</h4>
-          <p style="margin: 0; font-size: 12px; color: #666;">${chef.specialty}</p>
-          <div style="display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px;">
-            <span style="color: #f59e0b;">⭐</span>
-            <span style="font-size: 12px;">${chef.rating}</span>
-          </div>
-        </div>
-      `);
-
-      markerEl.addEventListener('mouseenter', () => {
-        popup.setLngLat([chef.lng, chef.lat]).addTo(map.current!);
-      });
-
-      markerEl.addEventListener('mouseleave', () => {
-        popup.remove();
-      });
-    });
-  };
-
-  const addServiceRadiuses = () => {
-    if (!map.current) return;
+    // Clear existing markers and circles
+    markersRef.current.forEach(marker => marker.remove());
+    circlesRef.current.forEach(circle => circle.remove());
+    markersRef.current = [];
+    circlesRef.current = [];
 
     mockChefs.forEach((chef, index) => {
-      const radiusInMeters = chef.serviceRadius * 1000;
-      
-      // Add pulsing circle source
-      map.current!.addSource(`chef-radius-${chef.id}`, {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          geometry: {
-            type: 'Point',
-            coordinates: [chef.lng, chef.lat]
-          },
-          properties: {}
-        }
-      });
+      // Add service radius circle with pulsing effect
+      const circle = L.circle([chef.lat, chef.lng], {
+        color: index % 2 === 0 ? '#f59e0b' : '#ef4444',
+        fillColor: index % 2 === 0 ? '#f59e0b' : '#ef4444',
+        fillOpacity: 0.1,
+        radius: chef.serviceRadius * 1000, // Convert km to meters
+        weight: 2,
+        opacity: 0.6
+      }).addTo(map.current!);
 
-      // Add circle layer with pulsing effect
-      map.current!.addLayer({
-        id: `chef-radius-${chef.id}`,
-        type: 'circle',
-        source: `chef-radius-${chef.id}`,
-        paint: {
-          'circle-radius': {
-            base: 1.75,
-            stops: [
-              [12, radiusInMeters / 100],
-              [22, radiusInMeters / 10]
-            ]
-          },
-          'circle-color': index % 2 === 0 ? '#f59e0b' : '#ef4444',
-          'circle-opacity': [
-            'interpolate',
-            ['linear'],
-            ['zoom'],
-            10, 0.1,
-            15, 0.2
-          ],
-          'circle-stroke-width': 2,
-          'circle-stroke-color': index % 2 === 0 ? '#f59e0b' : '#ef4444',
-          'circle-stroke-opacity': 0.6
-        }
-      });
+      circlesRef.current.push(circle);
 
       // Add pulsing animation
       let opacity = 0.1;
       let direction = 1;
       
-      const pulseAnimation = () => {
-        if (!map.current || !map.current.getLayer(`chef-radius-${chef.id}`)) return;
+      const pulseInterval = setInterval(() => {
+        if (!map.current || !circle) {
+          clearInterval(pulseInterval);
+          return;
+        }
         
-        opacity += direction * 0.01;
-        if (opacity >= 0.3) direction = -1;
-        if (opacity <= 0.1) direction = 1;
+        opacity += direction * 0.005;
+        if (opacity >= 0.25) direction = -1;
+        if (opacity <= 0.05) direction = 1;
 
-        map.current!.setPaintProperty(`chef-radius-${chef.id}`, 'circle-opacity', opacity);
-        requestAnimationFrame(pulseAnimation);
-      };
+        circle.setStyle({ fillOpacity: opacity });
+      }, 50);
 
-      setTimeout(() => pulseAnimation(), index * 500); // Stagger animations
+      // Add chef marker
+      const marker = L.marker([chef.lat, chef.lng], { 
+        icon: createChefIcon(chef) 
+      }).addTo(map.current!);
+
+      const popupContent = `
+        <div style="text-align: center; padding: 8px; min-width: 150px;">
+          <h4 style="margin: 0 0 4px 0; font-weight: bold; color: #374151;">${chef.name}</h4>
+          <p style="margin: 0 0 8px 0; font-size: 12px; color: #6b7280;">${chef.specialty}</p>
+          <div style="display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 8px;">
+            <span style="color: #f59e0b;">⭐</span>
+            <span style="font-size: 12px; color: #374151;">${chef.rating}</span>
+            <span style="font-size: 10px; color: #9ca3af;">• ${chef.serviceRadius}km</span>
+          </div>
+          <button 
+            onclick="window.selectChef('${chef.id}')"
+            style="
+              background: linear-gradient(135deg, #f59e0b, #f97316);
+              color: white;
+              border: none;
+              padding: 6px 12px;
+              border-radius: 6px;
+              font-size: 12px;
+              font-weight: 500;
+              cursor: pointer;
+              transition: opacity 0.2s;
+            "
+            onmouseover="this.style.opacity='0.9'"
+            onmouseout="this.style.opacity='1'"
+          >
+            Ver Perfil
+          </button>
+        </div>
+      `;
+
+      marker.bindPopup(popupContent, {
+        maxWidth: 200,
+        className: 'chef-popup'
+      });
+
+      // Add hover effects
+      marker.on('mouseover', () => {
+        marker.openPopup();
+      });
+
+      markersRef.current.push(marker);
     });
   };
 
+  // Global function to handle chef selection from popup
   useEffect(() => {
-    if (mapboxToken && userLocation && showTokenInput === false) {
+    (window as any).selectChef = (chefId: string) => {
+      onChefSelect(chefId);
+    };
+
+    return () => {
+      delete (window as any).selectChef;
+    };
+  }, [onChefSelect]);
+
+  useEffect(() => {
+    if (userLocation) {
       initializeMap();
     }
 
     return () => {
       if (map.current) {
         map.current.remove();
+        map.current = null;
       }
     };
-  }, [mapboxToken, userLocation, showTokenInput]);
-
-  const handleTokenSubmit = () => {
-    if (mapboxToken.trim()) {
-      setShowTokenInput(false);
-    }
-  };
-
-  if (showTokenInput) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="w-full max-w-md mx-4 p-6">
-          <div className="text-center mb-6">
-            <Key className="w-12 h-12 text-primary mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-foreground mb-2">Configurar Mapbox</h2>
-            <p className="text-sm text-muted-foreground">
-              Para exibir o mapa, insira sua chave pública do Mapbox.
-              <br />
-              <a 
-                href="https://mapbox.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                Obtenha sua chave aqui
-              </a>
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="mapbox-token">Mapbox Public Token</Label>
-              <div className="relative mt-1">
-                <Input
-                  id="mapbox-token"
-                  type={showToken ? "text" : "password"}
-                  placeholder="pk.eyJ1IjoibXl1c2VybmFtZSI..."
-                  value={mapboxToken}
-                  onChange={(e) => setMapboxToken(e.target.value)}
-                  className="pr-10"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3"
-                  onClick={() => setShowToken(!showToken)}
-                >
-                  {showToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={onBack} className="flex-1">
-                Cancelar
-              </Button>
-              <Button 
-                onClick={handleTokenSubmit}
-                disabled={!mapboxToken.trim()}
-                className="flex-1 bg-gradient-primary"
-              >
-                Continuar
-              </Button>
-            </div>
-          </div>
-        </Card>
-      </div>
-    );
-  }
+  }, [userLocation]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -399,7 +368,7 @@ export function ChefMap({ onBack, onChefSelect }: ChefMapProps) {
         <div ref={mapContainer} className="absolute inset-0" />
         
         {!isMapReady && (
-          <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+          <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-10">
             <div className="text-center">
               <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
               <p className="text-muted-foreground">Carregando mapa...</p>
@@ -449,6 +418,7 @@ export function ChefMap({ onBack, onChefSelect }: ChefMapProps) {
           )}
         </div>
       </div>
+
     </div>
   );
 }
