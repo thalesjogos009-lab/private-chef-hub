@@ -5,6 +5,7 @@ import { ChefDetails } from "@/components/ui/chef-details";
 import { BookingFlow } from "@/components/ui/booking-flow";
 import { AuthFlow } from "@/components/ui/auth-flow";
 import { SplashScreen } from "@/components/ui/splash-screen";
+import { ChefMap } from "@/components/ui/chef-map";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Star } from "lucide-react";
 
@@ -15,7 +16,8 @@ type AppState =
   | 'chef-details' 
   | 'booking' 
   | 'auth'
-  | 'booking-success';
+  | 'booking-success'
+  | 'map';
 
 type AuthMode = 'login' | 'signup' | 'chef-signup';
 
@@ -60,6 +62,10 @@ const Index = () => {
 
   const handleBackToDiscovery = () => {
     setAppState('discovery');
+  };
+
+  const handleMapView = () => {
+    setAppState('map');
   };
 
   if (appState === 'splash') {
@@ -135,7 +141,21 @@ const Index = () => {
   }
 
   if (appState === 'discovery') {
-    return <ChefDiscovery onChefSelect={handleChefSelect} />;
+    return (
+      <ChefDiscovery 
+        onChefSelect={handleChefSelect} 
+        onMapView={handleMapView}
+      />
+    );
+  }
+
+  if (appState === 'map') {
+    return (
+      <ChefMap
+        onBack={handleBackToDiscovery}
+        onChefSelect={handleChefSelect}
+      />
+    );
   }
 
   return (

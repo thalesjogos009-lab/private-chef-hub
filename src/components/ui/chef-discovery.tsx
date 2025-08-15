@@ -10,6 +10,7 @@ import dishSalmon from "@/assets/dish-salmon.jpg";
 
 interface ChefDiscoveryProps {
   onChefSelect: (chefId: string) => void;
+  onMapView?: () => void;
 }
 
 const mockChefs = [
@@ -51,7 +52,7 @@ const mockChefs = [
   }
 ];
 
-export function ChefDiscovery({ onChefSelect }: ChefDiscoveryProps) {
+export function ChefDiscovery({ onChefSelect, onMapView }: ChefDiscoveryProps) {
   const [searchTerm, setSearchTerm] = useState("");
 
   const handleChefSelect = (chefId: string) => {
@@ -120,7 +121,11 @@ export function ChefDiscovery({ onChefSelect }: ChefDiscoveryProps) {
       <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-center gap-4">
-            <Button variant="outline" className="flex-1 max-w-32">
+            <Button 
+              variant="outline" 
+              className="flex-1 max-w-32"
+              onClick={() => onMapView?.()}
+            >
               <Map className="w-4 h-4 mr-2" />
               Mapa
             </Button>
