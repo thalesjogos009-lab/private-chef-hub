@@ -8,6 +8,10 @@ import chefPortrait2 from "@/assets/chef-portrait-2.jpg";
 import dishPasta from "@/assets/dish-pasta.jpg";
 import dishSalmon from "@/assets/dish-salmon.jpg";
 
+interface ChefDiscoveryProps {
+  onChefSelect: (chefId: string) => void;
+}
+
 const mockChefs = [
   {
     id: "1",
@@ -47,14 +51,11 @@ const mockChefs = [
   }
 ];
 
-export function ChefDiscovery() {
+export function ChefDiscovery({ onChefSelect }: ChefDiscoveryProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedChef, setSelectedChef] = useState<string | null>(null);
 
   const handleChefSelect = (chefId: string) => {
-    setSelectedChef(chefId);
-    // Navigate to chef details
-    console.log("Selected chef:", chefId);
+    onChefSelect(chefId);
   };
 
   const filteredChefs = mockChefs.filter(chef =>

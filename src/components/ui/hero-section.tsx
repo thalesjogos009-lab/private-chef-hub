@@ -1,7 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { ChefHat, Star, Users } from "lucide-react";
 
-export function HeroSection() {
+interface HeroSectionProps {
+  onFindChef: () => void;
+  onBecomeChef: () => void;
+  onLogin: () => void;
+}
+
+export function HeroSection({ onFindChef, onBecomeChef, onLogin }: HeroSectionProps) {
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Gradient */}
@@ -45,6 +51,7 @@ export function HeroSection() {
           <Button 
             size="lg" 
             className="bg-white text-accent hover:bg-white/90 font-semibold px-8 py-3"
+            onClick={onFindChef}
           >
             Encontrar Chef
           </Button>
@@ -52,6 +59,7 @@ export function HeroSection() {
             variant="outline" 
             size="lg"
             className="border-white/30 text-white hover:bg-white/10 font-semibold px-8 py-3"
+            onClick={onBecomeChef}
           >
             Seja um Chef
           </Button>
